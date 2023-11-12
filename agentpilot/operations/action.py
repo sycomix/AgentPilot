@@ -206,8 +206,7 @@ class ActionInput:
     def pretty_input_format(self):
         # format = f" (Format {self.format})" if self.format != '' else ''
         accepts = self.fvalue.accepts
-        accepts = f" (This parameter takes {accepts})" if accepts != '' else ''
-        return accepts
+        return f" (This parameter takes {accepts})" if accepts != '' else ''
 
 
 class ActionInputCollection:
@@ -247,7 +246,7 @@ class ActionInputCollection:
         for i in self.inputs:
             if i.input_name != input_name:
                 continue
-            if (i.value != '' and i.value != 'NA') and not overwrite_if_filled:
+            if i.value not in ['', 'NA'] and not overwrite_if_filled:
                 continue
             i.value = input_value
             if config.get_value('system.debug'):
@@ -262,7 +261,7 @@ class ActionInputCollection:
 
     def all_filled(self):
         # return True if all inputs are filled
-        return all((inp.value != '' and inp.value != 'NA') for inp in self.inputs if inp.required)
+        return all(inp.value not in ['', 'NA'] for inp in self.inputs if inp.required)
 
     def pop(self):
         return self.inputs.pop()

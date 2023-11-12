@@ -2,7 +2,7 @@ from agentpilot.utils import sql
 
 
 def get_all_lists():
-    return sql.get_results(f"SELECT id, list_name FROM `lists`", return_type='dict')
+    return sql.get_results("SELECT id, list_name FROM `lists`", return_type='dict')
 
 
 def get_list_items(list_name):

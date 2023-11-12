@@ -33,7 +33,9 @@ class _On_Scoped(BaseAction):
     def run_action(self):
         self.identify_project()
         if self.found_project == '[MULTIPLE]':
-            yield ActionSuccess(f"[SAY]You aren't sure which project they're referring to. There are multiple possible projects.")
+            yield ActionSuccess(
+                "[SAY]You aren't sure which project they're referring to. There are multiple possible projects."
+            )
             self.found_project = None
             set_current_project(None)
 
@@ -100,11 +102,14 @@ class View_All_Active_Projects(BaseAction):
         self.desc = 'Information on All or Multiple current/active/pending projects'
 
     def run_action(self):
-        projects = sql.get_results(f"SELECT item_name FROM `lists_items` WHERE `list_id` in (SELECT `id` FROM `lists` WHERE `list_name` = 'projects')", return_type='list')
-        projects_str = ',\n'.join(projects)
+        projects = sql.get_results(
+            "SELECT item_name FROM `lists_items` WHERE `list_id` in (SELECT `id` FROM `lists` WHERE `list_name` = 'projects')",
+            return_type='list',
+        )
         if len(projects) == 0:
-            yield ActionSuccess(f"[SAY] We are not working on any projects at the moment")
+            yield ActionSuccess("[SAY] We are not working on any projects at the moment")
         else:
+            projects_str = ',\n'.join(projects)
             yield ActionSuccess(f"[SAY] We are working on: {projects_str}")
 
 
@@ -115,7 +120,7 @@ class Recap_Project(BaseAction):
         self.desc = 'Provide a Recap/Summary of the current project'
 
     def run_action(self):
-        yield ActionSuccess(f"[SAY] Recapping project")
+        yield ActionSuccess("[SAY] Recapping project")
 
 
 class Archive_Project(BaseAction):
@@ -125,12 +130,10 @@ class Archive_Project(BaseAction):
         self.desc = 'Delete/Archive the current project that is being worked on'
 
     def run_action(self):
-        print(
-            f'ASSISTANT: > Are you sure you want to archive this project? (Y/N)')
-        user_input = input("User: ")
-        if user_input:
+        print('ASSISTANT: > Are you sure you want to archive this project? (Y/N)')
+        if user_input := input("User: "):
             if user_input.lower()[0] != 'y':
-                yield ActionSuccess(f'[SAY] "Archiving Cancelled"')
+                yield ActionSuccess('[SAY] "Archiving Cancelled"')
             else:
                 yield ActionSuccess(f"[SAY] Archived {current_project}")
         # self.inputs.add('are-you-sure-you-want-to-delete-the-project', format='Boolean (True/False)'))

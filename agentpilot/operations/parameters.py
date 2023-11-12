@@ -31,8 +31,10 @@ class BoolFValue(FValue):
     def set(self, value):
         if isinstance(value, str):
             value = value.lower()
-            self.base_value = True if value == 'true' or value == '1' or value == 'yes' or value == 'y' else None
-            self.base_value = False if value == 'false' or value == '0' or value == 'no' or value == 'n' else self.base_value
+            self.base_value = True if value in ['true', '1', 'yes', 'y'] else None
+            self.base_value = (
+                False if value in ['false', '0', 'no', 'n'] else self.base_value
+            )
 
         elif isinstance(value, bool):
             self.base_value = value

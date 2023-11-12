@@ -321,60 +321,60 @@ def setup_local_text_llm(interpreter):
 
 def messages_to_prompt(messages, model):
 
-        for message in messages:
-          # Happens if it immediatly writes code
-          if "role" not in message:
-            message["role"] = "assistant"
+    for message in messages:
+      # Happens if it immediatly writes code
+      if "role" not in message:
+        message["role"] = "assistant"
 
         # Falcon prompt template
-        if "falcon" in model.lower():
+    if "falcon" in model.lower():
 
-          formatted_messages = ""
-          for message in messages:
-            formatted_messages += f"{message['role'].capitalize()}: {message['content']}\n"
+        formatted_messages = ""
+        for message in messages:
+          formatted_messages += f"{message['role'].capitalize()}: {message['content']}\n"
 
-            if "function_call" in message and "parsed_arguments" in message['function_call']:
-                if "code" in message['function_call']['parsed_arguments'] and "language" in message['function_call']['parsed_arguments']:
-                    code = message['function_call']['parsed_arguments']["code"]
-                    language = message['function_call']['parsed_arguments']["language"]
-                    formatted_messages += f"\n```{language}\n{code}\n```"
+          if "function_call" in message and "parsed_arguments" in message['function_call']:
+              if "code" in message['function_call']['parsed_arguments'] and "language" in message['function_call']['parsed_arguments']:
+                  code = message['function_call']['parsed_arguments']["code"]
+                  language = message['function_call']['parsed_arguments']["language"]
+                  formatted_messages += f"\n```{language}\n{code}\n```"
 
-          formatted_messages = formatted_messages.strip()
+        formatted_messages = formatted_messages.strip()
 
-        else:
-          # Llama prompt template
+    else:
+        # Llama prompt template
 
-          # Extracting the system prompt and initializing the formatted string with it.
-          system_prompt = messages[0]['content']
-          formatted_messages = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n"
+        # Extracting the system prompt and initializing the formatted string with it.
+        system_prompt = messages[0]['content']
+        formatted_messages = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n"
 
           # Loop starting from the first user message
-          for index, item in enumerate(messages[1:]):
-              role = item['role']
-              content = item['content']
+        for item in messages[1:]:
+            role = item['role']
+            content = item['content']
 
-              if role == 'user':
-                  formatted_messages += f"{content} [/INST] "
-              elif role == 'function':
-                  formatted_messages += f"Output: {content} [/INST] "
-              elif role == 'assistant':
-                    formatted_messages += content
+            if role == 'user':
+                formatted_messages += f"{content} [/INST] "
+            elif role == 'function':
+                formatted_messages += f"Output: {content} [/INST] "
+            elif role == 'assistant':
+                  formatted_messages += content
 
-                    # Add code
-                    if "function_call" in item and "parsed_arguments" in item['function_call']:
-                        if "code" in item['function_call']['parsed_arguments'] and "language" in item['function_call']['parsed_arguments']:
-                            code = item['function_call']['parsed_arguments']["code"]
-                            language = item['function_call']['parsed_arguments']["language"]
-                            formatted_messages += f"\n```{language}\n{code}\n```"
+                  # Add code
+                  if "function_call" in item and "parsed_arguments" in item['function_call']:
+                      if "code" in item['function_call']['parsed_arguments'] and "language" in item['function_call']['parsed_arguments']:
+                          code = item['function_call']['parsed_arguments']["code"]
+                          language = item['function_call']['parsed_arguments']["language"]
+                          formatted_messages += f"\n```{language}\n{code}\n```"
 
-                    formatted_messages += " </s><s>[INST] "
+                  formatted_messages += " </s><s>[INST] "
 
 
-          # Remove the trailing '<s>[INST] ' from the final output
-          if formatted_messages.endswith("<s>[INST] "):
-              formatted_messages = formatted_messages[:-10]
+        # Remove the trailing '<s>[INST] ' from the final output
+        if formatted_messages.endswith("<s>[INST] "):
+            formatted_messages = formatted_messages[:-10]
 
-        return formatted_messages
+    return formatted_messages
 
 
 def confirm_action(message):
@@ -478,10 +478,7 @@ def format_quality_choice(model, name_override = None) -> str:
     """
     Formats the model choice for display in the inquirer prompt.
     """
-    if name_override:
-        name = name_override
-    else:
-        name = model['filename']
+    name = name_override if name_override else model['filename']
     return f"{name} | Size: {model['Size']:.1f} GB, Estimated RAM usage: {model['RAM']:.1f} GB"
 
 def enough_disk_space(size, path) -> bool:
@@ -495,7 +492,4 @@ def enough_disk_space(size, path) -> bool:
     # Convert bytes to gigabytes
     free_gb = free / (2**30) 
 
-    if free_gb > size:
-        return True
-
-    return False
+    return free_gb > size

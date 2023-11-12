@@ -15,14 +15,10 @@ def terminal_interface(interpreter, message):
 
         Press `CTRL-C` to exit.
         """)
-    
+
     active_block = None
 
-    if message:
-        interactive = False
-    else:
-        interactive = True
-
+    interactive = not message
     while True:
         try:
             if interactive:
@@ -45,12 +41,12 @@ def terminal_interface(interpreter, message):
         # In the event we get code -> output -> code again
         ran_code_block = False
         render_cursor = False
-            
+
         try:
             for chunk in interpreter.get_chat_stream(message, display=False, stream=True):
                 if interpreter.debug_mode:
                     print("Chunk in `terminal_interface`:", chunk)
-                
+
                 # Message
                 if "message" in chunk:
                     if active_block is None:
@@ -71,7 +67,7 @@ def terminal_interface(interpreter, message):
                         active_block = CodeBlock()
                     ran_code_block = False
                     render_cursor = True
-                
+
                 if "language" in chunk:
                     active_block.language = chunk["language"]
                 if "code" in chunk:
@@ -111,7 +107,7 @@ def terminal_interface(interpreter, message):
                     render_cursor = False
                     active_block.output += "\n" + chunk["output"]
                     active_block.output = active_block.output.strip() # <- Aesthetic choice
-                    
+
                     # Truncate output
                     active_block.output = truncate_output(active_block.output, interpreter.max_output)
 

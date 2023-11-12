@@ -99,8 +99,7 @@ class SubprocessCodeInterpreter(BaseCodeInterpreter):
             else:
                 time.sleep(0.1)
             try:
-                output = self.output_queue.get(timeout=0.3)  # Waits for 0.3 seconds
-                yield output
+                yield self.output_queue.get(timeout=0.3)
             except queue.Empty:
                 #     # Try to yank 3 more times from it... maybe there's something in there...
                 #     # (I don't know if this actually helps. Maybe we just need to yank 1 more time)

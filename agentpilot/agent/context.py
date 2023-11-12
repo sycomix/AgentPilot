@@ -11,14 +11,16 @@ class Context:
     def __init__(self, agent, agent_id=0, context_id=None):
         self.agent = agent
         if agent_id is None and context_id is None:
-            latest_context = sql.get_results('SELECT id, agent_id FROM contexts ORDER BY id DESC LIMIT 1', return_type='rtuple')
-            if latest_context:
+            if latest_context := sql.get_results(
+                'SELECT id, agent_id FROM contexts ORDER BY id DESC LIMIT 1',
+                return_type='rtuple',
+            ):
                 context_id, agent_id = latest_context
             else:
                 agent_id = 0
         elif agent_id is not None:
             context_id = sql.get_scalar('SELECT id FROM contexts WHERE agent_id = ? ORDER BY id DESC LIMIT 1', (agent_id,))
-        elif context_id is not None:
+        else:
             agent_id = sql.get_scalar('SELECT agent_id FROM contexts WHERE id = ?', (context_id,))
 
         self.agent_id = agent_id
@@ -54,9 +56,8 @@ class Context:
 
             if (last_msg['role'] == role and not not_equals) or (last_msg['role'] != role and not_equals):
                 break
-            else:
-                time.sleep(0.05)
-                continue
+            time.sleep(0.05)
+            continue
 
     def generate_title(self):
         user_msg = self.message_history.last(incl_roles=('user',))
@@ -300,15 +301,11 @@ ORDER BY tbl.id;
 
     def last_role(self):
         last = self.last()
-        if last is None:
-            return ''
-        return last['role']
+        return '' if last is None else last['role']
 
     def last_id(self):
         last = self.last()
-        if last is None:
-            return 0
-        return last['id']
+        return 0 if last is None else last['id']
 
 
 class Message:
@@ -323,7 +320,7 @@ class Message:
         #     self.embedding = embeddings.string_embeddings_to_array(self.embedding)
         self.embedding_data = None
         if self.embedding_id is None:
-            if role == 'user' or role == 'assistant' or role == 'request' or role == 'result':
+            if role in ['user', 'assistant', 'request', 'result']:
                 self.embedding_id, self.embedding_data = embeddings.get_embedding(content)
 
     def change_content(self, new_content):

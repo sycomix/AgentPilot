@@ -254,15 +254,8 @@ import sys
 from agentpilot.gui import GUI
 
 def main():
-    mode = 'GUI'  # DEFAULT
-    if '--cli' in sys.argv:
-        mode = 'CLI'
-
-    if mode == 'GUI':
-        app = GUI()
-    else:
-        app = CLI()
-
+    mode = 'CLI' if '--cli' in sys.argv else 'GUI'
+    app = GUI() if mode == 'GUI' else CLI()
     app.run()
 
 

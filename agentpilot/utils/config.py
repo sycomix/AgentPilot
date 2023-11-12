@@ -17,8 +17,7 @@ def get_config_path():
     else:
         application_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
 
-    ret = os.path.join(application_path, 'configuration.yaml')
-    return ret
+    return os.path.join(application_path, 'configuration.yaml')
 
 
 def load_config():

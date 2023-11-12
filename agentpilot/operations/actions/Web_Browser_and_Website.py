@@ -26,7 +26,10 @@ class Search_Site(BaseAction):
         if website_name == '':
             google_search_url = f"https://www.google.com/search?q={'+'.join(search_query.split())}"
             webbrowser.open_new_tab(google_search_url)
-            yield ActionSuccess("[SAY]you've search for `" + search_query + "`, in the style of {char_name}.")
+            yield ActionSuccess(
+                f"[SAY]you've search for `{search_query}"
+                + "`, in the style of {char_name}."
+            )
         else:
             res = llm.get_scalar(f"""
 Input website name: "{website_name}"
@@ -53,11 +56,7 @@ class Open_Websites(BaseAction):
     def run_action(self):
         try:
             inp = self.inputs.get(0).value
-            if '&&&' in inp:
-                input_urls = inp.split('&&&')
-            else:
-                input_urls = [inp]
-
+            input_urls = inp.split('&&&') if '&&&' in inp else [inp]
             success_websites = []
             failed_websites = []
             for input_url_or_name in input_urls:
@@ -90,9 +89,15 @@ class Open_Websites(BaseAction):
                 # agentpilot.toolkits.selenium_browser.open_url(input_url)
                 success_websites.append(self.inputs.get(0).value)
 
-            if len(success_websites) > 0:
-                resp = f"[SAY] Opened {', '.join(self.inputs.get(0).value.split('&&&'))}" + \
-                       (f" and failed to open {','.join(failed_websites)}" if len(failed_websites) > 0 else '')
+            if success_websites:
+                resp = (
+                    f"[SAY] Opened {', '.join(self.inputs.get(0).value.split('&&&'))}"
+                    + (
+                        f" and failed to open {','.join(failed_websites)}"
+                        if failed_websites
+                        else ''
+                    )
+                )
                 yield ActionSuccess(resp)
             else:
                 resp = f"[SAY] Failed to open {','.join(failed_websites)}"

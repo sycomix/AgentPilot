@@ -26,7 +26,7 @@ class Create_A_New_List(BaseAction):
             lists.add_list(list_name)
             yield ActionSuccess(f'[SAY] "A new list called {list_name} has been created."')
         except Exception as e:
-            yield ActionSuccess(f'[SAY] "There was an error creating the list"')
+            yield ActionSuccess('[SAY] "There was an error creating the list"')
 
 
 class DeleteOrRemove_A_List(BaseAction):
@@ -40,7 +40,7 @@ class DeleteOrRemove_A_List(BaseAction):
         self.inputs.add('are-you-sure-you-want-to-delete-the-list', format='Boolean (True/False)')
         if not self.inputs.all_filled():
             yield ActionSuccess('[SAY] "Are you sure you want to delete the list?"')
-        yield ActionSuccess(f"[SAY] Deleted the list")
+        yield ActionSuccess("[SAY] Deleted the list")
 
 
 class Add_Item_To_List(BaseAction):
@@ -67,4 +67,4 @@ class DeleteOrRemove_Item_From_List(BaseAction):
         self.inputs.add('item')
 
     def run_action(self):
-        yield ActionSuccess(f"[SAY]Item has been removed from the list")
+        yield ActionSuccess("[SAY]Item has been removed from the list")

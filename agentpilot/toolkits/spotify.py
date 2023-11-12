@@ -4,22 +4,18 @@ from agentpilot.utils import api
 
 api_config = api.apis.get('spotify')
 acc_key = api_config['client_key']
-priv_key = api_config['priv_key']
-
 scope = "user-read-playback-state,user-modify-playback-state,streaming"
 
 spotify_client = None
 
-if priv_key:
+if priv_key := api_config['priv_key']:
     spotify_client = spotipy.Spotify(client_credentials_manager=SpotifyOAuth(acc_key, priv_key, redirect_uri='http://127.0.0.1:9090', scope=scope))
 
 
 def device_id():
     devices = spotify_client.devices()
     active_devices = [d for d in devices['devices'] if d['is_active']]
-    if len(active_devices) == 0: return None
-    dev_id = active_devices[0]['id']
-    return dev_id
+    return None if not active_devices else active_devices[0]['id']
 
 
 def has_active_device():
@@ -29,7 +25,7 @@ def has_active_device():
 def switch_to_smartphone_device():
     devices = spotify_client.devices()
     smartphone_devices = [d for d in devices['devices'] if d['type'] == 'Smartphone']
-    if len(smartphone_devices) == 0: return None
+    if not smartphone_devices: return None
 
     dev_id = smartphone_devices[0]['id']
     spotify_client.transfer_playback(device_id=dev_id, force_play=True)
@@ -39,7 +35,7 @@ def switch_to_smartphone_device():
 def switch_to_desktop_device():
     devices = spotify_client.devices()
     desktop_devices = [d for d in devices['devices'] if d['type'] == 'Computer']
-    if len(desktop_devices) == 0: return None
+    if not desktop_devices: return None
 
     dev_id = desktop_devices[0]['id']
     spotify_client.transfer_playback(device_id=dev_id, force_play=True)
@@ -48,14 +44,12 @@ def switch_to_desktop_device():
 
 def is_playing():
     cur_playing = spotify_client.currently_playing()
-    playing = cur_playing.get('is_playing', False) if cur_playing else False
-    return playing
+    return cur_playing.get('is_playing', False) if cur_playing else False
 
 
 def get_shuffle():
     cur_playback = spotify_client.current_playback()
-    shuffle_state = cur_playback.get('shuffle_state', False) if cur_playback else False
-    return shuffle_state
+    return cur_playback.get('shuffle_state', False) if cur_playback else False
 
 
 def set_shuffle(state):

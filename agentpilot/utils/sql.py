@@ -15,8 +15,7 @@ def get_db_path():
     else:
         application_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
 
-    ret = os.path.join(application_path, 'data.db')
-    return ret
+    return os.path.join(application_path, 'data.db')
 
 # def get_db_path():
 #     db_path = config.get_value('system.db_path')
@@ -110,9 +109,7 @@ def get_scalar(query, params=None):
     cursor.close()
     conn.close()
 
-    if row is None:
-        return None
-    return row[0]
+    return None if row is None else row[0]
 
 
 def check_database():
@@ -122,9 +119,7 @@ def check_database():
         return False
     try:
         app_ver = get_scalar("SELECT value as app_version FROM settings WHERE field = 'app_version'")
-        if app_ver is None:
-            return False
-        return True
+        return app_ver is not None
     except Exception as e:
         print(e)
         return False

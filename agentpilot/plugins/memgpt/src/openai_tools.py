@@ -114,5 +114,4 @@ async def async_get_embedding_with_backoff(text, model="text-embedding-ada-002")
     It specifies defaults + handles rate-limiting + is async"""
     text = text.replace("\n", " ")
     response = await acreate_embedding_with_backoff(input = [text], model=model)
-    embedding = response['data'][0]['embedding']
-    return embedding
+    return response['data'][0]['embedding']

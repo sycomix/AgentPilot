@@ -14,12 +14,10 @@ class R(SubprocessCodeInterpreter):
         """
 
         lines = code.split("\n")
-        processed_lines = []
-
-        for i, line in enumerate(lines, 1):
-            # Add active line print
-            processed_lines.append(f'cat("## active_line {i} ##\\n");{line}')
-
+        processed_lines = [
+            f'cat("## active_line {i} ##\\n");{line}'
+            for i, line in enumerate(lines, 1)
+        ]
         # Join lines to form the processed code
         processed_code = "\n".join(processed_lines)
 
@@ -35,7 +33,7 @@ cat("## end_of_execution ##\\n");
         # Count the number of lines of processed_code
         # (R echoes all code back for some reason, but we can skip it if we track this!)
         self.code_line_count = len(processed_code.split("\n")) - 1
-        
+
         return processed_code
     
     def line_postprocessor(self, line):
@@ -50,10 +48,7 @@ cat("## end_of_execution ##\\n");
             return None
         if line.strip().startswith("[1] \"") and line.endswith("\""):  # For strings, trim quotation marks
             return line[5:-1].strip()
-        if line.strip().startswith("[1]"):  # Normal R output prefix for non-string outputs
-            return line[4:].strip()
-
-        return line
+        return line[4:].strip() if line.strip().startswith("[1]") else line
 
     def detect_active_line(self, line):
         if "## active_line " in line:

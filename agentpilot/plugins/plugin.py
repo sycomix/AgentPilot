@@ -13,18 +13,13 @@ class AgentPlugin:  # todo - refactor
                                                            system_msg,
                                                            model=model,
                                                            temperature=0.7)  # todo - add setting for temperature on each part
-            for resp in stream:
-                delta = resp.choices[0].get('delta', {})
-                if not delta: continue
-                text = delta.get('content', '')
-                yield 'assistant', text
         else:
             stream = llm.get_completion(system_msg)
-            for resp in stream:
-                delta = resp.choices[0].get('delta', {})
-                if not delta: continue
-                text = delta.get('content', '')
-                yield 'assistant', text
+        for resp in stream:
+            delta = resp.choices[0].get('delta', {})
+            if not delta: continue
+            text = delta.get('content', '')
+            yield 'assistant', text
 
 
 

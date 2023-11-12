@@ -15,16 +15,16 @@ class AppleScript(SubprocessCodeInterpreter):
 
         # Escape double quotes
         code = code.replace('"', r'\"')
-        
+
         # Wrap in double quotes
-        code = '"' + code + '"'
-        
+        code = f'"{code}"'
+
         # Prepend start command for AppleScript
-        code = "osascript -e " + code
+        code = f"osascript -e {code}"
 
         # Append end of execution indicator
         code += '; echo "## end_of_execution ##"'
-        
+
         return code
 
     def add_active_line_indicators(self, code):

@@ -13,12 +13,7 @@ def get_embedding(text):
         # get last inserted for sqlite
         found_embedding = sql.get_results('SELECT id, embedding FROM embeddings WHERE original_text = ?', (clean_text,), return_type='dict')
 
-    # first item in found_embedding dict using efficient method
-    embedding = next(iter(found_embedding.items()))
-    # if not embedding:
-    #     return None, None
-    # else:
-    return embedding
+    return next(iter(found_embedding.items()))
 
 
 def string_embeddings_to_array(embedding_str):
@@ -26,5 +21,4 @@ def string_embeddings_to_array(embedding_str):
 
 
 def array_embeddings_to_string(embeddings):
-    if not embeddings: return ''
-    return ','.join([str(x) for x in embeddings])
+    return '' if not embeddings else ','.join([str(x) for x in embeddings])

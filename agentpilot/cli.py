@@ -27,7 +27,6 @@ class CLI:
         self.agent.context.print_history(12)
         while True:
             self.agent.context.wait_until_current_role('user', not_equals=True)
-            user_input = input("\nUser: ")
-            if user_input:
+            if user_input := input("\nUser: "):
                 for sentence in self.agent.send_and_receive(user_input, stream=True):
                     print(colored(sentence, tcolor), end='')

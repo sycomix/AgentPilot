@@ -249,10 +249,11 @@ class ToggleShuffle(BaseAction):
         state = self.inputs.get('new-shuffle-state-to-set-to').value.lower().strip() == 'true'
         try:
             current_state = spotify.get_shuffle()
-            if current_state == state and state:
-                yield ActionSuccess('[SAY] shuffle is already on.')
-            elif current_state == state and not state:
-                yield ActionSuccess('[SAY] shuffle is already off.')
+            if current_state == state:
+                if state:
+                    yield ActionSuccess('[SAY] shuffle is already on.')
+                else:
+                    yield ActionSuccess('[SAY] shuffle is already off.')
             spotify.set_shuffle(state)
             if state:
                 yield ActionSuccess('[SAY] shuffle is now on.')

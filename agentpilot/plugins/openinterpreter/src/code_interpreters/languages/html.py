@@ -13,6 +13,6 @@ class HTML(BaseCodeInterpreter):
             f.write(code.encode())
 
         # Open the HTML file with the default web browser
-        webbrowser.open('file://' + os.path.realpath(f.name))
+        webbrowser.open(f'file://{os.path.realpath(f.name)}')
 
         yield {"output": f"Saved to {os.path.realpath(f.name)} and opened with the user's default web browser."}

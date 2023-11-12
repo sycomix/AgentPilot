@@ -57,7 +57,7 @@ def sync_characters_polly():
                 display_name=excluded.display_name,
                 lang=excluded.lang""")
 
-        if len(removed_uuids) > 0:
+        if removed_uuids:
             sql.execute(f"""UPDATE voices SET deleted = 1 WHERE api_id = 5 AND uuid IN ("{'","'.join(removed_uuids)}");""")
 
     except Exception as e:
@@ -89,7 +89,7 @@ def try_download_voice(voice_uuid, text):  # #speech_uuid):  #
         time.sleep(0.1)
         try_count += 1
         if try_count > 10 or failed:
-            print(f"Failed to download {text}. " + str(e))
+            print(f"Failed to download {text}. {str(e)}")
             raise e
 
     # session = Session(aws_access_key_id=acc_key,

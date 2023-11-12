@@ -87,7 +87,7 @@ def sync_categories_fakeyou():
                 name
             ) VALUES {','.join(['(' + ','.join(cat) + ')' for cat in ins_cats])}""")
 
-        if len(existing_uuids) > 0:
+        if existing_uuids:
             sql.execute(f"""UPDATE categories SET deleted = 1 WHERE api_id = 1 AND uuid IN ("{'","'.join(existing_uuids)}");""")
 
         sql.execute("""
@@ -120,41 +120,6 @@ def sync_categories_fakeyou():
                     WHERE category_path.id = categories.id
                 )
             WHERE EXISTS (SELECT 1 FROM category_path);""")
-
-    # sql.execute("""
-    # WITH RECURSIVE category_path AS (
-    #     SELECT
-    #         id,
-    #         uuid,
-    #         parent_uuid,
-    #         name,
-    #         CAST(IFNULL(parent_uuid, '') AS TEXT) AS path
-    #     FROM categories
-    #     WHERE path IS NULL OR path = ''
-    #     UNION ALL
-    #     SELECT
-    #         c.id,
-    #         c.uuid,
-    #         c.parent_uuid,
-    #         c.name,
-    #         CAST(cp.path || '/' || c.parent_uuid AS TEXT) AS path
-    #     FROM categories AS c
-    #     JOIN category_path AS cp ON cp.uuid = c.parent_uuid
-    # )
-    # UPDATE categories
-    # SET
-    #     path = (
-    #         SELECT
-    #             path
-    #         FROM category_path
-    #         WHERE category_path.id = categories.id
-    #     )
-    # WHERE
-    #     EXISTS (
-    #         SELECT 1
-    #         FROM category_path
-    #         WHERE category_path.id = categories.id
-    #     );""")
 
     except Exception as e:
         print(e)
@@ -224,7 +189,7 @@ def sync_characters_fakeyou():
                 singing
             ) VALUES {','.join(['("' + '","'.join(map(str, voice)) + '")' for voice in voices])}""")
 
-        if len(existing_uuids) > 0:
+        if existing_uuids:
             sql.execute(f"""UPDATE voices SET deleted = 1 WHERE api_id = 1 AND uuid IN ("{'","'.join(existing_uuids)}");""")
 
         sql.execute("""
@@ -297,8 +262,7 @@ def generate_voice_async(voice_uuid, text):
         response = requests.post(url, headers=headers, json=data)
         if response.status_code != 200:
             raise Exception(response.text)
-        uid = response.json()['inference_job_token']
-        return uid
+        return response.json()['inference_job_token']
     except Exception as e:
         print(e)
         return None

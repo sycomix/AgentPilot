@@ -22,7 +22,7 @@ class Weather(BaseAction):
         try:
             base_url = "http://api.openweathermap.org/data/2.5/forecast?"
             location = self.inputs.get('weather-location').value
-            complete_url = base_url + "appid=" + priv_key + "&q=" + location + "&units=metric"
+            complete_url = f"{base_url}appid={priv_key}&q={location}&units=metric"
             response = requests.get(complete_url)
             x = response.json()
             if x["cod"] != "200":
@@ -47,6 +47,6 @@ class Weather(BaseAction):
             full_output = '\n'.join(output)
             # res = llm.get_scalar('weather')
 
-            yield ActionSuccess(f'[SAY] "Not yet implemented"')
+            yield ActionSuccess('[SAY] "Not yet implemented"')
         except Exception as e:
             yield ActionSuccess("[SAY] There was an error getting the weather.")

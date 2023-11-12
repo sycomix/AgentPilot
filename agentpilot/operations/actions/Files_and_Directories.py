@@ -20,16 +20,13 @@ class Open_Directory_Or_File(BaseAction):
         if platform.system() == 'Windows':
             # Windows
             command = 'explorer'
-            args = [directory_path]
         elif platform.system() == 'Darwin':
             # macOS
             command = 'open'
-            args = [directory_path]
         else:
             # Linux
             command = 'xdg-open'
-            args = [directory_path]
-
+        args = [directory_path]
         try:
             subprocess.run([command] + args, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             yield ActionSuccess(f'[SAY] "Opened the directory at {directory_path}"')

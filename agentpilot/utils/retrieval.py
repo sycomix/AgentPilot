@@ -70,7 +70,7 @@ class ActionCollection:
         if source_dir != '.':
             sys.path.append(source_dir)
             self.is_external = True
-        elif source_dir == '.':
+        else:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             source_dir = os.path.join(current_dir, '../operations/actions')
             self.is_external = False
@@ -178,8 +178,7 @@ ID: """
     action_ids = [int(x) for x in response.split(',') if x != '' and int(x) > 0]
 
     actions = [action_data_list[x - 1].clss for x in action_ids if x <= len(action_data_list)]
-    none_existing = [x for x in action_ids if x > len(action_data_list)]
-    if none_existing:
+    if none_existing := [x for x in action_ids if x > len(action_data_list)]:
         print(f"IDs {none_existing} do not exist in the list and will be ignored.")
     return actions
 
@@ -213,8 +212,7 @@ If no functions are valid based on the last {last_entity}, simply respond normal
 
     if 'function_call' in response[0]['choices'][0]['message']:
         func_name = response[0]['choices'][0]['message']['function_call']['name']
-        actions = [x.clss for x in action_data_list if x.clss.__name__ == func_name]
-        return actions
+        return [x.clss for x in action_data_list if x.clss.__name__ == func_name]
     else:
         return []
 
@@ -296,7 +294,11 @@ def print_tree(tree, indent=0):
 
 def get_action_class(action):
     action_name = action[0]
-    for category in all_category_files.values():
-        if action_name in category.all_actions_data:
-            return category.all_actions_data[action_name].clss
-    return action_name
+    return next(
+        (
+            category.all_actions_data[action_name].clss
+            for category in all_category_files.values()
+            if action_name in category.all_actions_data
+        ),
+        action_name,
+    )

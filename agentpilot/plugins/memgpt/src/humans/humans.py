@@ -6,8 +6,7 @@ def get_human_text(key=DEFAULT):
     filename = key if key.endswith('.txt') else f'{key}.txt'
     file_path = os.path.join(os.path.dirname(__file__), 'examples', filename)
 
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            return file.read().strip()
-    else:
+    if not os.path.exists(file_path):
         raise FileNotFoundError(f"No file found for key {key}, path={file_path}")
+    with open(file_path, 'r') as file:
+        return file.read().strip()

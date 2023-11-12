@@ -21,14 +21,14 @@ def respond(interpreter, base_agent):
             language = interpreter.current_deltas["language"]
             code = interpreter.current_deltas["code"]
 
-            print(f'RETURNED: CONFIRM, {str((language, code))}  - FROM Respond')
+            print(f'RETURNED: CONFIRM, {(language, code)}  - FROM Respond')
             # yield 'CONFIRM', (language, code)
             # return (language, code)
             yield 'CONFIRM', (language, code)
         else:
-            print(f'RETURNED: PAUSE, None  - FROM Respond')
+            print('RETURNED: PAUSE, None  - FROM Respond')
             # yield 'PAUSE', None
             yield 'PAUSE', ''
 
     except Exception as e:
-        print('ERROR: 895495: ' + str(e))
+        print(f'ERROR: 895495: {str(e)}')

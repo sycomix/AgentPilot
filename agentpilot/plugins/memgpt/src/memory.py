@@ -83,11 +83,10 @@ class CoreMemory(object):
 
     def edit_replace(self, field, old_content, new_content):
         if field == 'persona':
-            if old_content in self.persona:
-                new_persona = self.persona.replace(old_content, new_content)
-                return self.edit_persona(new_persona)
-            else:
+            if old_content not in self.persona:
                 raise ValueError('Content not found in persona (make sure to use exact string)')
+            new_persona = self.persona.replace(old_content, new_content)
+            return self.edit_persona(new_persona)
         elif field == 'human':
             if old_content in self.human:
                 new_human = self.human.replace(old_content, new_content)
@@ -122,8 +121,7 @@ async def summarize_messages(
     )
 
     printd(f"summarize_messages gpt reply: {response.choices[0]}")
-    reply = response.choices[0].message.content
-    return reply
+    return response.choices[0].message.content
 
 
 class ArchivalMemory(ABC):
@@ -186,7 +184,7 @@ class DummyArchivalMemory(ArchivalMemory):
             return matches[start:start+count], len(matches)
         elif start is None and count is not None:
             return matches[:count], len(matches)
-        elif start is not None and count is None:
+        elif start is not None:
             return matches[start:], len(matches)
         else:
             return matches, len(matches)
@@ -231,7 +229,9 @@ class DummyArchivalMemoryWithEmbeddings(DummyArchivalMemory):
             key=lambda pair: pair[1],  # Sort by the similarity score
             reverse=True  # We want the highest similarity first
         )
-        printd(f"archive_memory.search (vector-based): search for query '{query_string}' returned the following results (limit 5) and scores:\n{str([str(t[0]['content']) + '- score ' + str(t[1]) for t in sorted_archive_with_scores[:5]])}")
+        printd(
+            f"archive_memory.search (vector-based): search for query '{query_string}' returned the following results (limit 5) and scores:\n{[str(t[0]['content']) + '- score ' + str(t[1]) for t in sorted_archive_with_scores[:5]]}"
+        )
 
         # Extract the sorted archive without the scores
         matches = [item[0] for item in sorted_archive_with_scores]
@@ -241,7 +241,7 @@ class DummyArchivalMemoryWithEmbeddings(DummyArchivalMemory):
             return matches[start:start+count], len(matches)
         elif start is None and count is not None:
             return matches[:count], len(matches)
-        elif start is not None and count is None:
+        elif start is not None:
             return matches[start:], len(matches)
         else:
             return matches, len(matches)
@@ -260,10 +260,7 @@ class DummyArchivalMemoryWithFaiss(DummyArchivalMemory):
     """
 
     def __init__(self, index=None, archival_memory_database=None, embedding_model='text-embedding-ada-002', k=100):
-        if index is None:
-            self.index = faiss.IndexFlatL2(1536)    # openai embedding vector size.
-        else:
-            self.index = index
+        self.index = faiss.IndexFlatL2(1536) if index is None else index
         self.k = k
         self._archive = [] if archival_memory_database is None else archival_memory_database # consists of {'content': str} dicts
         self.embedding_model = embedding_model
@@ -306,11 +303,10 @@ class DummyArchivalMemoryWithFaiss(DummyArchivalMemory):
         if start is not None and count is not None:
             toprint = search_result[start:start+count]
         else:
-            if len(search_result) >= 5:
-                toprint = search_result[:5]
-            else:
-                toprint = search_result
-        printd(f"archive_memory.search (vector-based): search for query '{query_string}' returned the following results ({start}--{start+5}/{len(search_result)}) and scores:\n{str([t[:60] if len(t) > 60 else t for t in toprint])}")
+            toprint = search_result[:5] if len(search_result) >= 5 else search_result
+        printd(
+            f"archive_memory.search (vector-based): search for query '{query_string}' returned the following results ({start}--{start + 5}/{len(search_result)}) and scores:\n{[t[:60] if len(t) > 60 else t for t in toprint]}"
+        )
 
         # Extract the sorted archive without the scores
         matches = search_result
@@ -320,7 +316,7 @@ class DummyArchivalMemoryWithFaiss(DummyArchivalMemory):
             return matches[start:start+count], len(matches)
         elif start is None and count is not None:
             return matches[:count], len(matches)
-        elif start is not None and count is None:
+        elif start is not None:
             return matches[start:], len(matches)
         else:
             return matches, len(matches)
@@ -366,26 +362,32 @@ class DummyRecallMemory(RecallMemory):
         system_count = user_count = assistant_count = function_count = other_count = 0
         for msg in self._message_logs:
             role = msg['message']['role']
-            if role == 'system':
-                system_count += 1
-            elif role == 'user':
-                user_count += 1
-            elif role == 'assistant':
+            if role == 'assistant':
                 assistant_count += 1
             elif role == 'function':
                 function_count += 1
+            elif role == 'system':
+                system_count += 1
+            elif role == 'user':
+                user_count += 1
             else:
                 other_count += 1
-        memory_str = f"Statistics:" + \
-                     f"\n{len(self._message_logs)} total messages" + \
-                     f"\n{system_count} system" + \
-                     f"\n{user_count} user" + \
-                     f"\n{assistant_count} assistant" + \
-                     f"\n{function_count} function" + \
-                     f"\n{other_count} other"
+        memory_str = (
+            (
+                (
+                    (
+                        f"Statistics:\n{len(self._message_logs)} total messages"
+                        + f"\n{system_count} system"
+                    )
+                    + f"\n{user_count} user"
+                )
+                + f"\n{assistant_count} assistant"
+            )
+            + f"\n{function_count} function"
+        ) + f"\n{other_count} other"
         return \
-            f"\n### RECALL MEMORY ###" + \
-            f"\n{memory_str}"
+                f"\n### RECALL MEMORY ###" + \
+                f"\n{memory_str}"
 
     async def insert(self, message):
         raise NotImplementedError('This should be handled by the PersistenceManager, recall memory is just a search layer on top')
@@ -403,7 +405,7 @@ class DummyRecallMemory(RecallMemory):
             return matches[start:start+count], len(matches)
         elif start is None and count is not None:
             return matches[:count], len(matches)
-        elif start is not None and count is None:
+        elif start is not None:
             return matches[start:], len(matches)
         else:
             return matches, len(matches)
@@ -444,7 +446,7 @@ class DummyRecallMemory(RecallMemory):
             return matches[start:start+count], len(matches)
         elif start is None and count is not None:
             return matches[:count], len(matches)
-        elif start is not None and count is None:
+        elif start is not None:
             return matches[start:], len(matches)
         else:
             return matches, len(matches)
@@ -487,7 +489,9 @@ class DummyRecallMemoryWithEmbeddings(DummyRecallMemory):
             key=lambda pair: pair[1],  # Sort by the similarity score
             reverse=True  # We want the highest similarity first
         )
-        printd(f"recall_memory.text_search (vector-based): search for query '{query_string}' returned the following results (limit 5) and scores:\n{str([str(t[0]['message']['content']) + '- score ' + str(t[1]) for t in sorted_archive_with_scores[:5]])}")
+        printd(
+            f"recall_memory.text_search (vector-based): search for query '{query_string}' returned the following results (limit 5) and scores:\n{[str(t[0]['message']['content']) + '- score ' + str(t[1]) for t in sorted_archive_with_scores[:5]]}"
+        )
 
         # Extract the sorted archive without the scores
         matches = [item[0] for item in sorted_archive_with_scores]
@@ -497,7 +501,7 @@ class DummyRecallMemoryWithEmbeddings(DummyRecallMemory):
             return matches[start:start+count], len(matches)
         elif start is None and count is not None:
             return matches[:count], len(matches)
-        elif start is not None and count is None:
+        elif start is not None:
             return matches[start:], len(matches)
         else:
             return matches, len(matches)

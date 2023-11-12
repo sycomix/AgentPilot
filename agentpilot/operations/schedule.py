@@ -183,7 +183,7 @@ class TimeExpression:
         indexes = []
         offset = None
         if has_multiple:
-            indexes = [x for x in multiple_split]
+            indexes = list(multiple_split)
         elif has_range:
             indexes = [int(x) for x in range(int(range_split[0]), int(range_split[1]) + 1)]
             chk = 1
@@ -197,7 +197,7 @@ class TimeExpression:
     def timex_to_english(self):
         # If parse unsuccessful then send to thinker
         segments = self.time_expression.split('.')
-        if any([remove_brackets(x) not in self.order for x in segments]):
+        if any(remove_brackets(x) not in self.order for x in segments):
             return ''
         segments = sorted(segments, key=lambda x: self.order.index(remove_brackets(x)))
         engs = []
@@ -225,7 +225,10 @@ class TimeExpression:
             indexes, offset = self.split_square_brackets(square_brackets)
 
             if square_brackets:
-                use_weekdays = segment_timeframe == 'DAY' and (next_segment_timeframe == 'WEEK' or next_segment_timeframe == '')
+                use_weekdays = (
+                    segment_timeframe == 'DAY'
+                    and next_segment_timeframe in ['WEEK', '']
+                )
                 use_months = segment_timeframe == 'MONTH'
                 timeframe_str = f' {segment_timeframe}' if not (use_weekdays or use_months) else ''
                 engs.append(self.list_to_ranges_spoken(indexes, use_weekdays=use_weekdays, use_months=use_months) + timeframe_str)
@@ -252,22 +255,27 @@ class TimeExpression:
             if int_item > max_weekday and use_weekdays: use_weekdays = False
             if int_item > max_month and use_months: use_months = False
 
-            if current_range is None:
+            if (
+                current_range is not None
+                and len(current_range) == 1
+                and int_item == current_range[-1] + 1
+            ):
+                current_range.append(int_item)
+            elif (
+                current_range is not None
+                and len(current_range) == 1
+                or current_range is not None
+                and len(current_range) == 2
+                and int_item != current_range[-1] + 1
+            ):
+                ranges.append(current_range)
                 current_range = [int_item]
 
-            elif len(current_range) == 1:
-                if int_item == current_range[-1] + 1:
-                    current_range.append(int_item)
-                else:
-                    ranges.append(current_range)
-                    current_range = [int_item]
+            elif current_range is not None and len(current_range) == 2:
+                current_range[-1] = int_item
+            elif current_range is None:
+                current_range = [int_item]
 
-            elif len(current_range) == 2:
-                if int_item == current_range[-1] + 1:
-                    current_range[-1] = int_item
-                else:
-                    ranges.append(current_range)
-                    current_range = [int_item]
         ranges.append(current_range)
 
         single_strings = []
@@ -278,20 +286,19 @@ class TimeExpression:
                 single_strings.append(str(rng_dict[rng[0]]))
             elif len(rng) == 2:
                 if rng[1] - rng[0] == 1:
-                    single_strings.append(str(rng_dict[rng[0]]))
-                    single_strings.append(str(rng_dict[rng[1]]))
+                    single_strings.extend((str(rng_dict[rng[0]]), str(rng_dict[rng[1]])))
                 else:
                     range_strings.append(f"{rng_dict[rng[0]]} to {rng_dict[rng[1]]}")
             else:
                 raise ValueError('Invalid range')
 
-            # for i in range(len(rng)):
-            #     int_item = rng[i]
-            #     if use_weekdays:
-            #         rng[i] = days[int_item]
-            #     elif use_months:
-            #         rng[i] = months[int_item]
-            #     else:
-            #         rng[i] = dates[int_item]
+                # for i in range(len(rng)):
+                #     int_item = rng[i]
+                #     if use_weekdays:
+                #         rng[i] = days[int_item]
+                #     elif use_months:
+                #         rng[i] = months[int_item]
+                #     else:
+                #         rng[i] = dates[int_item]
 
         return ' and '.join(single_strings + range_strings)

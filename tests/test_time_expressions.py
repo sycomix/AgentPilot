@@ -50,8 +50,7 @@ class TestTimeExprs(unittest.TestCase):
     def test_all(self):
         while True:
             agent.context.wait_until_current_role('user', not_equals=True)
-            user_input = input("\nUser: ")
-            if user_input:
+            if user_input := input("\nUser: "):
                 agent.save_message('user', user_input)
 
 

@@ -56,11 +56,10 @@ def simplify_path(path):
     abs_path = os.path.abspath(path)
     exe_dir = filesystem.get_application_path()
 
-    if abs_path.startswith(exe_dir):
-        rel_path = os.path.relpath(abs_path, exe_dir)
-        return '.' + os.sep + rel_path
-    else:
+    if not abs_path.startswith(exe_dir):
         return abs_path
+    rel_path = os.path.relpath(abs_path, exe_dir)
+    return f'.{os.sep}{rel_path}'
 
 
 def get_all_children(widget):
@@ -596,7 +595,7 @@ def replace_newlines(text):
             # Add a tab character at the start of each line inside code blocks
             part_lines = part.split('\n')
             part = '\n\t'.join(part_lines)
-            part = '```' + part + '\n```'  # Adding back the code block ticks
+            part = f'```{part}' + '\n```'
         result.append(part)
 
     return ''.join(result)
@@ -1183,9 +1182,6 @@ class Page_Settings(ContentPage):
             if self.api_locked_status.get(int(api_id)):
                 QMessageBox.warning(self, "Locked API", "This API is locked and cannot be deleted.")
                 return
-
-            # Proceed with deletion from the database and the table
-            pass
         def add_entry(self):
             pass
 
@@ -1269,11 +1265,17 @@ class Page_Settings(ContentPage):
             if current_row == -1: return
             block_id = self.table.item(current_row, 0).text()
             text = self.block_data_text_area.toPlainText()
-            sql.execute(f"""
+            sql.execute(
+                """
                 UPDATE blocks
                 SET text = ?
                 WHERE id = ?
-            """, (text, block_id,))
+            """,
+                (
+                    text,
+                    block_id,
+                ),
+            )
 
             # reload blocks
             self.parent.main.page_chat.agent.load_agent()
@@ -1282,12 +1284,15 @@ class Page_Settings(ContentPage):
             current_row = self.table.currentRow()
             if current_row == -1: return
             att_id = self.table.item(current_row, 0).text()
-            att_text = sql.get_scalar(f"""
+            att_text = sql.get_scalar(
+                """
                 SELECT
                     `text`
                 FROM blocks
                 WHERE id = ?
-            """, (att_id,))
+            """,
+                (att_id,),
+            )
             self.block_data_text_area.setText(att_text)
 
     class Page_Model_Settings(QWidget):
@@ -1385,7 +1390,7 @@ class Page_Settings(ContentPage):
 
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Warning)
-                msg.setText(f"Are you sure you want to delete this model?")
+                msg.setText("Are you sure you want to delete this model?")
                 msg.setWindowTitle("Delete Model")
                 msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
@@ -1440,9 +1445,6 @@ class Page_Settings(ContentPage):
             # This method is called whenever a model is selected from the list
             if current:
                 model_name = current.text()
-                # Here you can handle what happens when a model is selected
-                # For example, you can fetch more data from the database and display it in the main content area
-                pass  # Your logic goes here
 
     # class Page_Model_Settings(QWidget):
     #     def __init__(self, parent=None):
@@ -1903,8 +1905,7 @@ class Page_Agents(ContentPage):
                 self.avatar.setPixmap(avatar_img)
                 self.avatar.update()
                 current_row = parent.table_widget.currentRow()
-                name_cell = parent.table_widget.item(current_row, 3)
-                if name_cell:
+                if name_cell := parent.table_widget.item(current_row, 3):
                     self.name.setText(name_cell.text())
                 active_plugin = parent.agent_config.get('general.use_plugin', '')
                 # W, set plugin combo by key
@@ -2120,8 +2121,9 @@ class Page_Agents(ContentPage):
             self.toggle_function_calling_type_visibility()
 
         def browse_for_folder(self):
-            folder = QFileDialog.getExistingDirectory(self, "Select Source Directory")
-            if folder:
+            if folder := QFileDialog.getExistingDirectory(
+                self, "Select Source Directory"
+            ):
                 self.source_directory.setText(folder)
 
         def toggle_enabled_state(self):
@@ -2136,11 +2138,7 @@ class Page_Agents(ContentPage):
             self.use_validator.setEnabled(is_enabled)
 
             # Update label colors based on enabled state
-            if is_enabled:
-                color = TEXT_COLOR  # or any other color when enabled
-            else:
-                color = "#4d4d4d"  # or any other color when disabled
-
+            color = TEXT_COLOR if is_enabled else "#4d4d4d"
             self.label_source_directory.setStyleSheet(f"color: {color}")
             self.label_replace_busy_action_on_new.setStyleSheet(f"color: {color}")
             self.label_use_function_calling.setStyleSheet(f"color: {color}")
@@ -2305,14 +2303,14 @@ class Page_Agents(ContentPage):
             api_name = self.api_dropdown.currentText()
             search_text = self.search_field.text().lower()
 
-            filtered_voices = []
-            for voice in self.all_voices:
-                # Check if voice matches the selected API and contains the search text in 'name' or 'known_from'
-                # (using the correct indices for your data)
-                if (api_name == 'ALL' or str(voice[1]) == api_name) and \
-                        (search_text in voice[2].lower() or search_text in voice[3].lower()):
-                    filtered_voices.append(voice)
-
+            filtered_voices = [
+                voice
+                for voice in self.all_voices
+                if (api_name == 'ALL' or str(voice[1]) == api_name)
+                and (
+                    search_text in voice[2].lower() or search_text in voice[3].lower()
+                )
+            ]
             self.display_data_in_table(filtered_voices)
 
         def display_data_in_table(self, voices):
@@ -2563,11 +2561,7 @@ class Page_Chat(QScrollArea):
                 if is_generating:
                     scroll_bar = self.scroll_area.verticalScrollBar()
                     is_at_bottom = scroll_bar.value() >= scroll_bar.maximum() - 10
-                    if not is_at_bottom:
-                        self.decoupled_scroll = True
-                    else:
-                        self.decoupled_scroll = False
-
+                    self.decoupled_scroll = not is_at_bottom
         # If the event is a KeyRelease event and it's the Ctrl key
     # If the event is a KeyRelease event and it's the Ctrl key
         if event.type() == QEvent.KeyRelease:
@@ -2719,8 +2713,10 @@ class Page_Chat(QScrollArea):
 
         def previous_context(self):
             context_id = self.parent().agent.context.message_history.context_id
-            prev_context_id = sql.get_scalar("SELECT id FROM contexts WHERE id < ? AND parent_id IS NULL ORDER BY id DESC LIMIT 1;", (context_id,))
-            if prev_context_id:
+            if prev_context_id := sql.get_scalar(
+                "SELECT id FROM contexts WHERE id < ? AND parent_id IS NULL ORDER BY id DESC LIMIT 1;",
+                (context_id,),
+            ):
                 self.parent().goto_context(prev_context_id)
                 self.btn_next_context.setEnabled(True)
             else:
@@ -2728,8 +2724,10 @@ class Page_Chat(QScrollArea):
 
         def next_context(self):
             context_id = self.parent().agent.context.message_history.context_id
-            next_context_id = sql.get_scalar("SELECT id FROM contexts WHERE id > ? AND parent_id IS NULL ORDER BY id LIMIT 1;", (context_id,))
-            if next_context_id:
+            if next_context_id := sql.get_scalar(
+                "SELECT id FROM contexts WHERE id > ? AND parent_id IS NULL ORDER BY id LIMIT 1;",
+                (context_id,),
+            ):
                 self.parent().goto_context(next_context_id)
                 self.btn_prev_context.setEnabled(True)
             else:
@@ -2978,8 +2976,8 @@ class Page_Chat(QScrollArea):
                 self.btn_rerun.click()
 
         def reset_countdown(self):
-            countdown_stopped = getattr(self, 'countdown_stopped', True)
-            if countdown_stopped: return
+            if countdown_stopped := getattr(self, 'countdown_stopped', True):
+                return
             self.timer.stop()
             self.countdown = int(self.agent.config.get('actions.code_auto_run_seconds', 5))  # 5  # Reset countdown to 5 seconds
             self.countdown_button.setText(f"{self.countdown}")
@@ -3122,7 +3120,7 @@ class Page_Chat(QScrollArea):
             # show error message box
             old_pin_state = PIN_STATE
             PIN_STATE = True
-            QMessageBox.critical(self, "Error", "OpenAI API Error: " + str(e))
+            QMessageBox.critical(self, "Error", f"OpenAI API Error: {str(e)}")
             PIN_STATE = old_pin_state
             return
 
@@ -3194,7 +3192,7 @@ class Page_Chat(QScrollArea):
         self.load_new_code_bubbles()
 
         auto_title = self.agent.config.get('context.auto_title', True)
-        if not self.agent.context.message_history.count() == 1:
+        if self.agent.context.message_history.count() != 1:
             auto_title = False
 
         if auto_title:
@@ -3218,11 +3216,7 @@ class Page_Chat(QScrollArea):
         self.chat_bubbles.append(bubble)
         count = len(self.chat_bubbles)
 
-        if msg_role == 'assistant':
-            self.last_assistant_bubble = bubble
-        else:
-            self.last_assistant_bubble = None
-
+        self.last_assistant_bubble = bubble if msg_role == 'assistant' else None
         self.chat_scroll_layout.insertWidget(count - 1, bubble)
 
         return bubble
@@ -3475,7 +3469,7 @@ class MessageText(QTextEdit):
             self.setFixedSize(self.sizeHint())
             return  # We handle the event, no need to pass it to the base class
 
-        if key == Qt.Key.Key_Enter or key == Qt.Key.Key_Return:
+        if key in [Qt.Key.Key_Enter, Qt.Key.Key_Return]:
             if mod == Qt.KeyboardModifier.ShiftModifier:
                 event.setModifiers(Qt.KeyboardModifier.NoModifier)
 
@@ -3696,8 +3690,7 @@ class Main(QMainWindow):
         screen_height = screen_geo.height()
         win_right = win_x + win_width >= screen_width
         win_bottom = win_y + win_height >= screen_height
-        is_right_corner = win_right and win_bottom
-        return is_right_corner
+        return win_right and win_bottom
 
     def collapse(self):
         global PIN_STATE
@@ -3803,9 +3796,6 @@ def create_folder_button(self, initial_value):
 def select_folder(self, button, initial_value):
     folder = QFileDialog.getExistingDirectory(self, "Select Folder", initial_value)
     folder.setStyleSheet("color: white;")
-    if folder:
-        # Store the folder to config or use it as you need
-        pass
 
 
 class GUI:

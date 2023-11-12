@@ -40,7 +40,7 @@ def sync_categories_uberduck():
             ) VALUES {','.join([f'(2, "{cat}", "", "{cat}")' for cat in cats])}"""
         sql.execute(q)
 
-        if len(existing_uuids) > 0:
+        if existing_uuids:
             sql.execute(f"""UPDATE categories SET deleted = 1 WHERE api_id = 2 AND uuid IN ("{'","'.join(existing_uuids)}");""")
 
         return response
@@ -60,6 +60,7 @@ def sync_characters_uberduck(response):
 
         voices = []
         uuid_cats = {}
+        rating = '0.5'
         # response = requests.get(url, headers=headers)
         for voice in response.json():
             disp_name = voice['display_name'].replace('"', '')
@@ -68,22 +69,23 @@ def sync_characters_uberduck(response):
             uuid_cats[uuid] = voice['category']
             added_on = str(int(voice['added_at'] if voice['added_at'] else 0))
             updated_on = added_on
-            rating = '0.5'
             creator = voice['contributors'][0] if voice['contributors'] else ''
             lang = voice['language']
             verb = 'rapping' if '(rapping)' in disp_name.lower() else ''
             verb = 'singing' if '(singing)' in disp_name.lower() else ''
-            voices.append([
-                '2',
-                disp_name,
-                uuid,
-                added_on,
-                updated_on,
-                rating,
-                creator.replace('"', ''),
-                lang,
-                verb
-            ])
+            voices.append(
+                [
+                    '2',
+                    disp_name,
+                    uuid,
+                    updated_on,
+                    updated_on,
+                    rating,
+                    creator.replace('"', ''),
+                    lang,
+                    verb,
+                ]
+            )
             if uuid in existing_uuids: existing_uuids.remove(uuid)
 
         q = f"""
@@ -100,7 +102,7 @@ def sync_characters_uberduck(response):
             ) VALUES {','.join(['("' + '","'.join(map(str, voice)) + '")' for voice in voices])}"""
         sql.execute(q)
 
-        if len(existing_uuids) > 0:
+        if existing_uuids:
             sql.execute(f"""UPDATE voices SET deleted = 1 WHERE api_id = 2 AND uuid IN ("{'","'.join(existing_uuids)}");""")
 
         sql.execute("""
@@ -145,7 +147,7 @@ def try_download_voice(speech_uuid):
             time.sleep(0.1)
             try_count += 1
             if try_count > 10 or failed:
-                print(f"Failed to download {speech_uuid}. " + str(e))
+                print(f"Failed to download {speech_uuid}. {str(e)}")
                 return None
             # if failed to generate voice, return none
 
@@ -170,8 +172,7 @@ def generate_voice_async(voice_uuid, text):
         response = requests.post(url, json=payload, headers=headers)
         if response.status_code != 200:
             raise Exception(response.text)
-        uuid = response.json()['uuid']
-        return uuid
+        return response.json()['uuid']
     except Exception as e:
         print(e)
         return None

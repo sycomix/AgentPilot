@@ -222,45 +222,41 @@ Thought: """
         from agentpilot.operations.task import Task, TaskStatus  # Avoid circular import
 
         max_steps = self.parent_task.agent.config.get('react.max_steps')
-        for i in range(max_steps - self.thought_count):
+        for _ in range(max_steps - self.thought_count):
             if self.thought_task is None:
                 thought = self.get_thought()
                 unique_actions = set(self.action_names)  # temporary until better fingerprint
                 if thought.upper().startswith('OBJECTIVE COMPLETE'):
-                    if len(unique_actions) == 1:
-                        fin_response = self.results[-1]
-                        return True, fin_response
-                    else:
-                        fin_response = f"""[SAY] "The task has been completed" (Task = `{self.parent_task.objective}`)"""
-                        return True, fin_response
-
+                    fin_response = (
+                        self.results[-1]
+                        if len(unique_actions) == 1
+                        else f"""[SAY] "The task has been completed" (Task = `{self.parent_task.objective}`)"""
+                    )
+                    return True, fin_response
                 elif thought.upper().startswith('OBJECTIVE FAILED'):
                     if len(unique_actions) == 1:
                         fin_response = self.results[-1]
-                        return True, fin_response
                     else:
                         fin_response = f"""[SAY] "I can not complete the task" (Task = `{self.parent_task.objective}`)"""
-                        return True, fin_response
-
+                    return True, fin_response
                 self.thought_task = Task(agent=self.parent_task.agent,
                                          objective=thought,
                                          parent_react=self)
             try:
                 request_finished, thought_response = self.thought_task.run()
-                if request_finished:
-                    succeeded = self.thought_task.status == TaskStatus.COMPLETED
-                    self.save_action(self.thought_task.fingerprint(_type='desc'))
-                    self.action_names.append(self.thought_task.fingerprint(_type='name'))
-                    self.save_result(('Done, ' if succeeded else 'Failed, ') + thought_response)
-                    self.thought_task = None
-                else:
+                if not request_finished:
                     return False, thought_response
 
+                succeeded = self.thought_task.status == TaskStatus.COMPLETED
+                self.save_action(self.thought_task.fingerprint(_type='desc'))
+                self.action_names.append(self.thought_task.fingerprint(_type='name'))
+                self.save_result(('Done, ' if succeeded else 'Failed, ') + thought_response)
+                self.thought_task = None
             except Exception as e:
                 logs.insert_log('TASK_ERROR', str(e))
                 return True, f'[SAY] "I failed the task" (Task = `{self.parent_task.objective}`)'
         logs.insert_log('TASK_ERROR', 'Max steps reached')
-        return True, f'[SAY] "I failed the task because I hit the max steps limit"'
+        return True, '[SAY] "I failed the task because I hit the max steps limit"'
 
     def get_thought(self):
         thought = llm.get_scalar(self.prompt, num_lines=1)

@@ -58,7 +58,7 @@ class SafeDict(dict):
 def categorize_item(item_list, item, can_make_new=False):
     # if cats is a list
     if isinstance(item_list, list):
-        items = ['   ' + s for s in item_list]
+        items = [f'   {s}' for s in item_list]
         cat_str = '\n'.join(items)
     elif isinstance(item_list, str):
         items = lists.get_list_items(item_list).values()
@@ -115,20 +115,20 @@ def time_to_human_spoken(inp_time, include_timeframe=True):
         11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
         16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen"
     }
-    dec_mapping = {
-        0: "oh",
-        2: "twenty", 3: "thirty", 4: "forty", 5: "fifty",
-        6: "sixty", 7: "seventy", 8: "eighty", 9: "ninety"
-    }
-
     hour_map = hour_mapping[hour_12h]
-    dec = minute // 10
     if 9 < minute < 20:
         min_map = hour_mapping[minute]
     elif minute == 0:
         min_map = 'oh clock'
     else:
         digits = hour_mapping[minute % 10] if minute % 10 != 0 else ''
+        dec_mapping = {
+            0: "oh",
+            2: "twenty", 3: "thirty", 4: "forty", 5: "fifty",
+            6: "sixty", 7: "seventy", 8: "eighty", 9: "ninety"
+        }
+
+        dec = minute // 10
         min_map = f'{dec_mapping[dec]} {digits}'
 
     timeframe = ' in the morning'
@@ -157,15 +157,13 @@ def is_url_valid(url):
 def extract_square_brackets(string):
     pattern = r"\[(.*?)\]$"
     matches = re.findall(pattern, string)
-    if len(matches) == 0: return None
-    return matches[0]
+    return None if len(matches) == 0 else matches[0]
 
 
 def extract_parentheses(string):
     pattern = r"\((.*?)\)$"
     matches = re.findall(pattern, string)
-    if len(matches) == 0: return None
-    return matches[0]
+    return None if len(matches) == 0 else matches[0]
 
 
 def remove_brackets(string, brackets_to_remove='[('):
@@ -184,8 +182,7 @@ def extract_list_from_string(string):
     # The regex pattern matches either a number followed by a dot or a hyphen,
     # followed by optional spaces, and then captures the remaining text until the end of the line.
     pattern = r'(?:\d+\.|-)\s*(.*)'
-    matches = re.findall(pattern, string)
-    return matches
+    return re.findall(pattern, string)
 
 
 def create_circular_pixmap(src_pixmap, diameter=30):

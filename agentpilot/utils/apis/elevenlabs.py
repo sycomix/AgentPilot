@@ -29,15 +29,15 @@ def sync_categories_elevenlabs():
 
         voices = []
         uuid_cats = {}
+        known_from = ''
+        creator = ''
+        lang = ''
         # response = requests.get(url, headers=headers)
         for voice in response.json()['voices']:
             disp_name = voice['name'].replace('"', '')
-            known_from = ''
             # cat = voice['category']  # .replace("'", "''")  ###########################
             uuid = voice['voice_id']
             uuid_cats[uuid] = voice['category']
-            creator = ''
-            lang = ''
             verb = 'rapping' if '(rapping)' in disp_name.lower() else ''
             verb = 'singing' if '(singing)' in disp_name.lower() else ''
             voices.append([
@@ -63,7 +63,7 @@ def sync_categories_elevenlabs():
             ) VALUES {','.join(['("' + '","'.join(map(str, voice)) + '")' for voice in voices])}"""
         sql.execute(q)
 
-        if len(existing_uuids) > 0:
+        if existing_uuids:
             sql.execute(f"""UPDATE voices SET deleted = 1 WHERE api_id = 3 AND uuid IN ("{'","'.join(existing_uuids)}");""")
 
         sql.execute("""
@@ -120,5 +120,5 @@ def try_download_voice(voice_uuid, text):
             time.sleep(0.1)
             try_count += 1
             if try_count > 10 or failed:
-                print(f"Failed to download {voice_uuid}. " + str(e))
+                print(f"Failed to download {voice_uuid}. {str(e)}")
                 return None

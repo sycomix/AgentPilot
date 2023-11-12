@@ -7,15 +7,13 @@ import re
 class Python(SubprocessCodeInterpreter):
     def __init__(self):
         super().__init__()
-        self.start_cmd = sys.executable + " -i -q -u"
+        self.start_cmd = f"{sys.executable} -i -q -u"
         
     def preprocess_code(self, code):
         return preprocess_python(code)
     
     def line_postprocessor(self, line):
-        if re.match(r'^(\s*>>>\s*|\s*\.\.\.\s*)', line):
-            return None
-        return line
+        return None if re.match(r'^(\s*>>>\s*|\s*\.\.\.\s*)', line) else line
 
     def detect_active_line(self, line):
         if "## active_line " in line:
@@ -43,11 +41,7 @@ def preprocess_python(code):
     # (are we sure about this? test this)
     code_lines = code.split("\n")
     code_lines = [c for c in code_lines if c.strip() != ""]
-    code = "\n".join(code_lines)
-
-    # Add end command (we'll be listening for this so we know when it ends)
-    code += '\n\nprint("## end_of_execution ##")'
-
+    code = "\n".join(code_lines) + '\n\nprint("## end_of_execution ##")'
     return code
 
 

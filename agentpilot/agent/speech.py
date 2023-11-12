@@ -137,9 +137,15 @@ class Stream_Speak:
                         if self.agent.voice_data:
                             char_name = self.agent.voice_data[3].lower()
                             char_first_name = char_name.split(' ')[0]
-                            if current_block.lower().strip("'").startswith(char_name + ': '):
+                            if (
+                                current_block.lower()
+                                .strip("'")
+                                .startswith(f'{char_name}: ')
+                            ):
                                 current_block = current_block[len(char_name) + 2:].strip('"')
-                            elif current_block.lower().startswith(char_first_name + ': '):
+                            elif current_block.lower().startswith(
+                                f'{char_first_name}: '
+                            ):
                                 current_block = current_block[len(char_first_name) + 2:].strip('"')
                         is_first = False
 
@@ -152,7 +158,7 @@ class Stream_Speak:
 
                             if use_fallbacks and fallback_to_davinci(current_block):
                                 # print("\r", end="")
-                                print(f'YIELDED: event, [FALLBACK]  - FROM PushStream')
+                                print('YIELDED: event, [FALLBACK]  - FROM PushStream')
                                 yield 'event', '[FALLBACK]'
                             response = self.generate_voices(msg_uuid, current_block, response)
                             # print(colored(current_block, tcolor), end='')
@@ -166,7 +172,7 @@ class Stream_Speak:
             if current_block.strip() != '':
                 if use_fallbacks and fallback_to_davinci(current_block):
                     # print("\r", end="")
-                    print(f'YIELDED: event, [FALLBACK]  - FROM PushStream')
+                    print('YIELDED: event, [FALLBACK]  - FROM PushStream')
                     yield 'event', '[FALLBACK]'
                 response = self.generate_voices(msg_uuid, current_block, response)
                 # print(colored(current_block, tcolor), end='')
@@ -194,11 +200,8 @@ class Stream_Speak:
                         time.sleep(3.1)
                     elif api_id == 2:
                         self.voice_uuids.put((msg_uuid, uberduck.generate_voice_async(character_uuid, preproc_block)))
-                    elif api_id == 3:
+                    elif api_id in {3, 5}:
                         self.voice_uuids.put((msg_uuid, (character_uuid, preproc_block)))
-                    elif api_id == 5:
-                        self.voice_uuids.put((msg_uuid, (character_uuid, preproc_block)))
-                        # self.voice_uuids.put((msg_uuid, awspolly.generate_voice_async(character_uuid, preproc_block)))  # (character_uuid, preproc_block)))
                     else:
                         raise Exception('Invalid API ID')
 
@@ -335,10 +338,7 @@ class Stream_Speak:
 
 def fallback_to_davinci(text):
     lower_text = text.lower().replace('-', ' ')
-    for trigger in fallback_triggers:
-        if trigger.lower() not in lower_text: continue
-        return True
-    return False
+    return any(trigger.lower() in lower_text for trigger in fallback_triggers)
 
 
 fallback_iams = [
@@ -374,5 +374,4 @@ iam_prefixes = [
 
 fallback_triggers = []
 for iam in fallback_iams:
-    for iam_pf in iam_prefixes:
-        fallback_triggers.append(f'{iam_pf} {iam}')
+    fallback_triggers.extend(f'{iam_pf} {iam}' for iam_pf in iam_prefixes)

@@ -9,14 +9,15 @@ def merge_deltas(original, delta):
     Great for reconstructing OpenAI streaming responses -> complete message objects.
     """
     for key, value in delta.items():
-        if isinstance(value, dict):
-            if key not in original:
-                original[key] = value
-            else:
-                merge_deltas(original[key], value)
+        if (
+            isinstance(value, dict)
+            and key not in original
+            or not isinstance(value, dict)
+            and key not in original
+        ):
+            original[key] = value
+        elif isinstance(value, dict):
+            merge_deltas(original[key], value)
         else:
-            if key in original:
-                original[key] += value
-            else:
-                original[key] = value
+            original[key] += value
     return original

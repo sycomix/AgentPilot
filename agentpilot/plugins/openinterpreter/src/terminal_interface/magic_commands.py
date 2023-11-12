@@ -26,11 +26,11 @@ def handle_undo(self, arguments):
 
     # Print out a preview of what messages were removed.
     for message in removed_messages:
-      if 'content' in message and message['content'] != None:
-        display_markdown_message(f"**Removed message:** `\"{message['content'][:30]}...\"`")
-      elif 'function_call' in message:
-        display_markdown_message(f"**Removed codeblock**") # TODO: Could add preview of code removed here.
-    
+        if 'content' in message and message['content'] != None:
+            display_markdown_message(f"**Removed message:** `\"{message['content'][:30]}...\"`")
+        elif 'function_call' in message:
+            display_markdown_message("**Removed codeblock**")
+
     print("") # Aesthetics.
 
 def handle_help(self, arguments):
@@ -48,9 +48,9 @@ def handle_help(self, arguments):
     ]
 
     # Add each command and its description to the message
-    for cmd, desc in commands_description.items():
-      base_message.append(f"- `{cmd}`: {desc}\n")
-
+    base_message.extend(
+        f"- `{cmd}`: {desc}\n" for cmd, desc in commands_description.items()
+    )
     additional_info = [
       "\n\nFor further assistance, please join our community Discord or consider contributing to the project's development."
     ]
@@ -62,7 +62,7 @@ def handle_help(self, arguments):
 
 
 def handle_debug(self, arguments=None):
-    if arguments == "" or arguments == "true":
+    if arguments in ["", "true"]:
         display_markdown_message("> Entered debug mode")
         print(self.current_deltas)
         self.debug_mode = True

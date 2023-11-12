@@ -27,7 +27,7 @@ class CodeBlock(BaseBlock):
     code = self.code
     if not code:
       return
-    
+
     # Create a table for the code
     code_table = Table(show_header=False,
                        show_footer=False,
@@ -56,7 +56,7 @@ class CodeBlock(BaseBlock):
     code_panel = Panel(code_table, box=MINIMAL, style="on #272722")
 
     # Create a panel for the output (if there is any)
-    if self.output == "" or self.output == "None":
+    if self.output in ["", "None"]:
       output_panel = ""
     else:
       output_panel = Panel(self.output,

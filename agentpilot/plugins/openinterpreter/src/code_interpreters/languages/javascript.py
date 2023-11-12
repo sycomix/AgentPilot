@@ -41,15 +41,11 @@ def preprocess_javascript(code):
     processed_lines = []
 
     for i, line in enumerate(lines, 1):
-        # Add active line print
-        processed_lines.append(f'console.log("## active_line {i} ##");')
-        processed_lines.append(line)
-
+        processed_lines.extend((f'console.log("## active_line {i} ##");', line))
     # Join lines to form the processed code
     processed_code = "\n".join(processed_lines)
 
-    # Wrap in a try-catch and add end of execution marker
-    processed_code = f"""
+    return f"""
 try {{
 {processed_code}
 }} catch (e) {{
@@ -57,5 +53,3 @@ try {{
 }}
 console.log("## end_of_execution ##");
 """
-
-    return processed_code

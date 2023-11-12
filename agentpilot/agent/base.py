@@ -120,8 +120,7 @@ class Agent:
             self.config = {**global_config, **agent_config}
 
         self.active_plugin = AgentPlugin()
-        use_plugin = self.config.get('general.use_plugin', None)
-        if use_plugin:
+        if use_plugin := self.config.get('general.use_plugin', None):
             if use_plugin == 'openinterpreter':
                 self.active_plugin = OpenInterpreter_AgentPlugin(self)
             elif use_plugin == 'memgpt':
@@ -168,7 +167,7 @@ class Agent:
 
         # Use the SafeDict class to format the text to gracefully allow non existent keys
         # Fill SafeDict with blocks
-        blocks_dict = helpers.SafeDict({k: v for k, v in self.blocks.items()})
+        blocks_dict = helpers.SafeDict(dict(self.blocks.items()))
 
         semi_formatted_sys_msg = string.Formatter().vformat(
             self.config.get('context.sys_msg', ''), (), blocks_dict,
@@ -178,7 +177,8 @@ class Agent:
             char_name = re.sub(r'\([^)]*\)', '', self.voice_data[3]).strip()
             full_name = f"{char_name} from {self.voice_data[4]}" if self.voice_data[4] != '' else char_name
             verb = self.voice_data[7]
-            if verb != '': verb = ' ' + verb
+            if verb != '':
+                verb = f' {verb}'
         else:
             char_name = 'a helpful assistant'
             full_name = char_name
@@ -238,8 +238,7 @@ class Agent:
         return message
 
     def send(self, message):
-        new_msg = self.save_message('user', message)
-        return new_msg
+        return self.save_message('user', message)
 
     def receive(self, stream=False):
         return self.get_response_stream() if stream else self.get_response()
@@ -250,10 +249,9 @@ class Agent:
 
     def get_response(self, extra_prompt='', msgs_in_system=False, check_for_tasks=True):
 
-        full_response = ''
-        for sentence in self.get_response_stream(extra_prompt, msgs_in_system, check_for_tasks):
-            full_response += sentence
-        return full_response
+        return ''.join(
+            self.get_response_stream(extra_prompt, msgs_in_system, check_for_tasks)
+        )
 
     def get_response_stream(self, extra_prompt='', msgs_in_system=False, check_for_tasks=True, use_davinci=False):
         messages = self.context.message_history.get(llm_format=True)
@@ -310,12 +308,11 @@ class Agent:
         use_msgs_in_system = messages if msgs_in_system else None
         system_msg = self.system_message(msgs_in_system=use_msgs_in_system,
                                          response_instruction=extra_prompt)
-        initial_prompt = ''
         model = self.config.get('context.model', 'gpt-3.5-turbo')
-        if isinstance(self.active_plugin, OpenInterpreter_AgentPlugin):
+        if isinstance(
+            self.active_plugin, (OpenInterpreter_AgentPlugin, MemGPT_AgentPlugin)
+        ):
             stream = self.active_plugin.hook_stream()  # messages, messages[-1]['content'])
-        elif isinstance(self.active_plugin, MemGPT_AgentPlugin):
-            stream = self.active_plugin.hook_stream()
         else:
             stream = self.active_plugin.stream(messages, msgs_in_system, system_msg, model, use_davinci=False)
         had_fallback = False
@@ -354,6 +351,7 @@ class Agent:
             yield key, chunk
 
         if not had_fallback:
+            initial_prompt = ''
             logs.insert_log('PROMPT', f'{initial_prompt}\n\n--- RESPONSE ---\n\n{response}',
                             print_=False)
 

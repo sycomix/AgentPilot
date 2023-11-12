@@ -35,26 +35,13 @@ def validate_llm_settings(interpreter):
                 answers = inquirer.prompt(questions)
                 chosen_param = answers['param']
 
-                interpreter.model = "huggingface/" + models[chosen_param]
-                break
+                interpreter.model = f"huggingface/{models[chosen_param]}"
+        elif not os.environ.get("OPENAI_API_KEY") and not interpreter.api_key:
+            if interpreter.model in []:
 
-            else:
+                display_welcome_message_once()
 
-                # They have selected a model. Have they downloaded it?
-                # Break here because currently, this is handled in llm/setup_local_text_llm.py
-                # How should we unify all this?
-                break
-        
-        else:
-            # Ensure API keys are set as environment variables
-
-            # OpenAI
-            if interpreter.model in []:  # litellm.open_ai_chat_completion_models:
-                if not os.environ.get("OPENAI_API_KEY") and not interpreter.api_key:
-                    
-                    display_welcome_message_once()
-
-                    display_markdown_message("""---
+                display_markdown_message("""---
                     > OpenAI API key not found
 
                     To use `GPT-4` (recommended) please provide an OpenAI API key.
@@ -64,31 +51,30 @@ def validate_llm_settings(interpreter):
                     ---
                     """)
 
-                    response = input("OpenAI API key: ")
+                response = input("OpenAI API key: ")
 
-                    if response == "":
-                        # User pressed `enter`, requesting Code-Llama
-                        display_markdown_message("""> Switching to `Code-Llama`...
+                if response == "":
+                    # User pressed `enter`, requesting Code-Llama
+                    display_markdown_message("""> Switching to `Code-Llama`...
                         
                         **Tip:** Run `interpreter --local` to automatically use `Code-Llama`.
                         
                         ---""")
-                        time.sleep(1.5)
-                        interpreter.local = True
-                        interpreter.model = ""
-                        continue
-                    
-                    display_markdown_message("""
+                    time.sleep(1.5)
+                    interpreter.local = True
+                    interpreter.model = ""
+                    continue
+
+                display_markdown_message("""
 
                     **Tip:** To save this key for later, run `export OPENAI_API_KEY=your_api_key` on Mac/Linux or `setx OPENAI_API_KEY your_api_key` on Windows.
                     
                     ---""")
-                    
-                    time.sleep(2)
-                    break
 
-            # This is a model we don't have checks for yet.
-            break
+                time.sleep(2)
+                break
+
+        break
 
     # If we're here, we passed all the checks.
 

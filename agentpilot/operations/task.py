@@ -80,25 +80,26 @@ class Task:
         is_guess_valid = True
         if validate_guess:
             is_guess_valid = self.validate_guess(actions)
-            print('validating guess = ' + str(is_guess_valid))
+            print(f'validating guess = {str(is_guess_valid)}')
 
         use_react = enforce_react
 
         if is_guess_valid:
-            action_invoked_interpreter = any([getattr(action, 'use-src', False) for action in actions])
+            action_invoked_interpreter = any(
+                getattr(action, 'use-src', False) for action in actions
+            )
             if action_invoked_interpreter:
                 use_react = False
                 # self.interpreter = OpenInterpreter_TaskPlugin(self)  # todo
             else:
                 self.actions = actions
                 self.action_methods = [action.run_action for action in self.actions]
+        elif self.parent_react is None:
+            use_react = True
         else:
-            if self.parent_react is None:
-                use_react = True
-            else:
-                # self.interpreter = OpenInterpreter_TaskPlugin(self)  # todo
-                logs.insert_log('TASK CREATED', self.fingerprint())
-                return
+            # self.interpreter = OpenInterpreter_TaskPlugin(self)  # todo
+            logs.insert_log('TASK CREATED', self.fingerprint())
+            return
 
         if use_react:
             self.react = ExplicitReAct(self)
@@ -112,7 +113,14 @@ class Task:
         elif _type == 'desc':
             return delimiter.join([action.desc for action in self.actions])
         elif _type == 'result':
-            return delimiter.join(['Done, ' if action.result_code == 200 else 'Failed, ' + action.result for action in self.actions])
+            return delimiter.join(
+                [
+                    'Done, '
+                    if action.result_code == 200
+                    else f'Failed, {action.result}'
+                    for action in self.actions
+                ]
+            )
         else:
             raise Exception(f'Unknown fingerprint type: {_type}')
 
@@ -194,13 +202,13 @@ Answer: """, single_line=True)  # If FALSE, explain why
                     else:
                         action_result = action_method()
                         if action_result is None:
-                            action_result = ActionSuccess(f'[SAY] Done')
+                            action_result = ActionSuccess('[SAY] Done')
 
                 except StopIteration as e:
                     if e.args[0] is False:
-                        action_result = ActionSuccess(f'[SAY] Failed')
+                        action_result = ActionSuccess('[SAY] Failed')
                     else:
-                        action_result = ActionSuccess(f'[SAY] Done')
+                        action_result = ActionSuccess('[SAY] Done')
                 except Exception as e:
                     return True, str(e)
 
